@@ -1,13 +1,11 @@
 ---
 name: chronicle
-description: Auto-capture your project's story as you build — decisions, pivots, dead ends, milestones. Export onboarding briefings for agents and humans. Usage: /chronicle [init|<note>|export]
+description: Auto-capture your project's story as you build — decisions, pivots, dead ends, milestones. Export as onboarding docs or content hooks. Usage: /chronicle [init|<note>|export]
 ---
 
 # /chronicle — Project Chronicle
 
 Capture the story of your project as it progresses. Not just what changed (that's git) — but *why*, what you tried, what failed, what surprised you, and what you'd tell someone joining tomorrow.
-
-Works as onboarding for both humans and AI agents — a new session or teammate can read the chronicle and understand not just the current state, but how you got here.
 
 ## Commands
 
@@ -16,7 +14,9 @@ Parse `$ARGUMENTS` to determine the subcommand:
 - `/chronicle init` — activate chronicle for this project
 - `/chronicle <free text>` — append a manual entry
 - `/chronicle export --onboard` — generate an onboarding briefing
-- `/chronicle` (no args) — show the last 3 entries
+- `/chronicle export --content` — extract content-worthy hooks for posts/threads
+- `/chronicle` (no args) — synthesize & record current session
+- `/chronicle show` — display the last 3 entries
 
 ---
 
@@ -35,7 +35,7 @@ Auto-captured by the chronicle skill. Reverse-chronological.
   before ending any session where meaningful work was done. Skip trivial
   sessions (just reading, quick questions, no project changes).
   Manual entries: /chronicle <note>
-  Export: /chronicle export --onboard
+  Exports: /chronicle export --onboard | --content
 -->
 
 ---
@@ -79,11 +79,32 @@ Append an entry to `CHRONICLE.md` immediately. The user's free text is the note.
 **Decisions:** {key choices made, or "—"}
 **Progress:** {what moved forward, or "—"}
 **Blocked:** {open blockers, or "—"}
+**Content-worthy?:** {Yes — 'potential post angle' | No}
 ```
 
 ---
 
-## /chronicle (no args)
+## /chronicle (no args) — Session Capture
+
+Synthesize and record the current session's chronicle-worthy material. This is the primary way entries get created.
+
+1. Read `CHRONICLE.md` (if missing, tell user to run `/chronicle init` first).
+2. Reflect on everything that happened in this session:
+   - **Decisions made** — architecture choices, tool picks, tradeoff resolutions
+   - **Changes implemented** — what was built, modified, or shipped
+   - **Design work** — brainstorms, specs drafted, patterns established
+   - **Strategy pivots** — approaches tried and abandoned, direction changes
+   - **Insights & surprises** — things learned, unexpected behaviors, gotchas discovered
+3. Synthesize into a single narrative entry covering the session (not one entry per event).
+4. If nothing chronicle-worthy happened (trivial session, just reading or quick questions), say so and skip.
+5. Append the entry to `CHRONICLE.md` in the hybrid format (newest first, after the header `---`).
+6. Confirm what was captured with a one-line summary.
+
+To view recent entries instead, use `/chronicle show`.
+
+---
+
+## /chronicle show
 
 Read `CHRONICLE.md` and display the 3 most recent entries.
 
@@ -151,6 +172,19 @@ Tell the user the file path. This file is regenerated fresh each time (not appen
 
 ---
 
+## /chronicle export --content
+
+Scan the chronicle for content-worthy material:
+
+1. Read `CHRONICLE.md` in full.
+2. Find all entries where **Content-worthy?** is "Yes" or where the narrative contains interesting lessons, surprising findings, or contrarian decisions.
+3. Group by theme (e.g., "debugging war stories", "architecture decisions", "tool discoveries").
+4. For each theme, generate 2-3 sentence X post hooks — punchy, opinionated, with a concrete takeaway. These are starting points, not finished posts.
+5. Write to `CHRONICLE-CONTENT.md` in the project root.
+6. Tell the user the file path and how many hooks were generated.
+
+---
+
 ## Auto-capture behavior (session end)
 
 When `CHRONICLE.md` exists in the project root, CC should append an entry before ending a session where meaningful work was done. The process:
@@ -169,7 +203,8 @@ When `CHRONICLE.md` exists in the project root, CC should append an entry before
 
 ## Guidelines
 
-- **Narrative over bullet points.** The chronicle tells a story. Future-you (or a new team member or agent) should be able to read it and understand not just what was built, but the journey.
-- **Include the dead ends.** "We tried X and it didn't work because Y" is often more valuable than "we did Z." This is especially important for AI agents who might otherwise repeat the same failed approaches.
+- **Narrative over bullet points.** The chronicle tells a story. Future-you (or a new team member) should be able to read it and understand not just what was built, but the journey.
+- **Include the dead ends.** "We tried X and it didn't work because Y" is often more valuable than "we did Z."
 - **Be specific.** Names, version numbers, error messages, benchmarks. Vague entries are useless entries.
 - **Don't over-log.** One entry per meaningful session. Quick Q&A or file reads don't need entries.
+- **Content-worthy is a low bar.** If you'd tell a friend about it over coffee, mark it content-worthy.
